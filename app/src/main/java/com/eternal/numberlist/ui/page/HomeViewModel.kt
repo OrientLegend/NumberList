@@ -39,13 +39,24 @@ class HomeViewModel : ViewModel() {
 
     fun insert(num: NumberItem) {
         _listState.value.insert(num)
+        saveToDatabase()
+    }
+
+    fun saveToDatabase() {
         thread {
-            num.id = appDatabase.numberItemDao().insert(
-                NumberItemData(
-                    number = num.number,
-                    brushIndex = num.brushIndex
-                )
-            )
+            appDatabase.numberItemDao().run {
+                loadAll().forEach {
+                    deleteById(it.id)
+                }
+                _listState.value.forEach {
+                    it.id = insert(
+                        NumberItemData(
+                            number = it.number,
+                            brushIndex = it.brushIndex
+                        )
+                    )
+                }
+            }
         }
     }
 }
