@@ -20,7 +20,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.BrushPainter
 import androidx.compose.ui.input.pointer.pointerInput
@@ -30,7 +29,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.eternal.numberlist.App
+import com.eternal.numberlist.App.Companion.vibrator
 import com.eternal.numberlist.R
 import com.eternal.numberlist.ui.utils.brushList
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
@@ -60,13 +59,13 @@ fun HomePage() {
             viewModel.removeAt(position)
         }
         if (showDialog) {
-            AddNumberDialog(onConfirm = { inputString, brush ->
+            AddNumberDialog(onConfirm = { inputString, brushIndex ->
                 val number = try {
                     inputString.toInt()
                 } catch (_: Exception) {
                     114514
                 }
-                viewModel.insert(NumberItem(number, brush))
+                viewModel.insert(NumberItem(number = number, brushIndex =  brushIndex))
                 showDialog = false
             }, onDismiss = {
                 showDialog = false
@@ -114,7 +113,7 @@ private fun FloatingButton(modifier: Modifier = Modifier, onClicked: () -> Unit)
 
 @Composable
 private fun NumberList(
-    numbers: List<NumberItem<Int>>, modifier: Modifier = Modifier, onItemLongPress: (Int) -> Unit
+    numbers: List<NumberItem>, modifier: Modifier = Modifier, onItemLongPress: (Int) -> Unit
 ) {
     LazyColumn(modifier = modifier) {
         itemsIndexed(items = numbers) { index, number ->
@@ -133,7 +132,7 @@ private fun NumberList(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun NumberCard(
-    number: NumberItem<Int>,
+    number: NumberItem,
     modifier: Modifier = Modifier,
     onLongPress: () -> Unit
 ) {
@@ -141,7 +140,7 @@ private fun NumberCard(
         modifier = modifier.pointerInput(Unit) {
             detectTapGestures(onLongPress = {
                 onLongPress()
-                App.vibrator.vibrate(
+                vibrator.vibrate(
                     CombinedVibration.createParallel(
                         VibrationEffect.createOneShot(
                             100, 10
@@ -155,7 +154,7 @@ private fun NumberCard(
             modifier = Modifier
                 .fillMaxSize()
                 .align(Alignment.CenterHorizontally)
-                .background(brush = number.brush)
+                .background(brush = brushList[number.brushIndex])
         ) {
             Text(
                 text = number.number.toString(),
@@ -171,7 +170,7 @@ private fun NumberCard(
 @Composable
 fun AddNumberDialog(
     modifier: Modifier = Modifier,
-    onConfirm: (String, Brush) -> Unit,
+    onConfirm: (String, Int) -> Unit,
     onDismiss: () -> Unit
 ) {
     var inputString by remember {
@@ -188,7 +187,7 @@ fun AddNumberDialog(
         },
         title = { Text(text = stringResource(id = R.string.add_a_number)) },
         confirmButton = {
-            TextButton(onClick = { onConfirm(inputString, brushList[brushIndex]) }) {
+            TextButton(onClick = { onConfirm(inputString, brushIndex) }) {
                 Text(text = stringResource(id = R.string.add))
             }
         },

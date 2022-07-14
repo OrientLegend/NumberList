@@ -6,8 +6,9 @@ import com.eternal.numberlist.ui.page.NumberItem
  * Binary insert for ordered list
  * @warning Can only be used when the list is ordered
  * @return Return a Boolean value indicating whether the insertion was successful
+ * I hope that Kotlin can provide a grammar which I can use the upper bound of generic with operator +(The way like Rust)
  */
-fun<T: Comparable<T>> MutableList<NumberItem<T>>.insert(num: NumberItem<T>) {
+fun MutableList<NumberItem>.insert(num: NumberItem) {
     if(this.isEmpty()) {
         this.add(num)
         return

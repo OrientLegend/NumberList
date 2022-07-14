@@ -16,7 +16,10 @@ import androidx.core.view.WindowCompat
 import com.eternal.numberlist.ui.page.HomePage
 import com.eternal.numberlist.ui.theme.NumberListTheme
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
+import dagger.hilt.EntryPoint
+import dagger.hilt.android.AndroidEntryPoint
 
+@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
