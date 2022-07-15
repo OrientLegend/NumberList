@@ -2,13 +2,16 @@ package com.eternal.numberlist.ui.page
 
 import android.os.CombinedVibration
 import android.os.VibrationEffect
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
@@ -31,6 +34,7 @@ import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.eternal.numberlist.App.Companion.vibrator
 import com.eternal.numberlist.R
+import com.eternal.numberlist.database.entity.NumberItemData
 import com.eternal.numberlist.ui.utils.brushList
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 
@@ -38,7 +42,10 @@ import com.google.accompanist.systemuicontroller.rememberSystemUiController
 @Composable
 fun HomePage() {
     val viewModel: HomeViewModel = viewModel()
-    val numberList = viewModel.listState.collectAsState()
+    val listState = viewModel.listState.collectAsState()
+    val numberList =
+        listState.value.collectAsState(initial = mutableListOf())
+
     var showDialog by remember {
         mutableStateOf(false)
     }
@@ -54,9 +61,9 @@ fun HomePage() {
     }) { innerPadding ->
         println(innerPadding)
         NumberList(
-            numbers = numberList.value, modifier = Modifier.padding(innerPadding)
-        ) { position ->
-            viewModel.removeAt(position)
+            numbers = numberList, modifier = Modifier.padding(innerPadding)
+        ) { id ->
+            viewModel.removeById(id)
         }
         if (showDialog) {
             AddNumberDialog(onConfirm = { inputString, brushIndex ->
@@ -65,7 +72,7 @@ fun HomePage() {
                 } catch (_: Exception) {
                     114514
                 }
-                viewModel.insert(NumberItem(number = number, brushIndex =  brushIndex))
+                viewModel.insert(NumberItemData(number = number, brushIndex = brushIndex))
                 showDialog = false
             }, onDismiss = {
                 showDialog = false
@@ -113,16 +120,18 @@ private fun FloatingButton(modifier: Modifier = Modifier, onClicked: () -> Unit)
 
 @Composable
 private fun NumberList(
-    numbers: List<NumberItem>, modifier: Modifier = Modifier, onItemLongPress: (Int) -> Unit
+    numbers: State<List<NumberItemData>>, modifier: Modifier = Modifier, onItemLongPress: (Long) -> Unit
 ) {
     LazyColumn(modifier = modifier) {
-        itemsIndexed(items = numbers) { index, number ->
+        items(items = numbers.value, key = {
+            it.id
+        }) { number ->
             NumberCard(
                 number = number, modifier = Modifier
                     .fillMaxWidth()
                     .padding(10.dp)
             ) {
-                onItemLongPress(index)
+                onItemLongPress(number.id)
             }
         }
     }
@@ -132,7 +141,7 @@ private fun NumberList(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun NumberCard(
-    number: NumberItem,
+    number: NumberItemData,
     modifier: Modifier = Modifier,
     onLongPress: () -> Unit
 ) {
@@ -221,7 +230,7 @@ fun AddNumberDialog(
                         .padding(top = 12.dp)
                 ) {
                     for ((index, brush) in brushList.withIndex()) {
-                        Column{
+                        Column {
                             Icon(
                                 painter = BrushPainter(brush), contentDescription = null,
                                 modifier = Modifier
@@ -230,8 +239,11 @@ fun AddNumberDialog(
                                     .clickable { onSelectBrush(index) },
                                 tint = Color.Unspecified
                             )
-                            if(index == brushIndex){
-                                Icon(imageVector = Icons.Filled.Check, contentDescription = null)
+                            if (index == brushIndex) {
+                                Icon(
+                                    imageVector = Icons.Filled.Check, contentDescription = null,
+                                    modifier = Modifier.align(Alignment.CenterHorizontally)
+                                )
                             }
                         }
                     }
@@ -241,7 +253,6 @@ fun AddNumberDialog(
         }
     )
 }
-
 
 
 @Preview

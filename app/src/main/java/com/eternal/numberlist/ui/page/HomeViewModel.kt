@@ -1,62 +1,41 @@
 package com.eternal.numberlist.ui.page
 
-import androidx.compose.runtime.mutableStateListOf
+import android.util.Log
+import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.runtime.toMutableStateList
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.eternal.numberlist.App.Companion.appDatabase
 import com.eternal.numberlist.database.entity.NumberItemData
-import com.eternal.numberlist.ui.utils.insert
-import com.eternal.numberlist.ui.utils.runOnMainThread
+import com.eternal.numberlist.ui.utils.DatabaseUtil
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
-import kotlin.concurrent.thread
 
 class HomeViewModel : ViewModel() {
 
-    private val _listState = MutableStateFlow(mutableStateListOf<NumberItem>())
+    private val _listState = MutableStateFlow(flowOf<List<NumberItemData>>())
 
-    val listState: StateFlow<List<NumberItem>> get() = _listState.asStateFlow()
+    val listState: StateFlow<Flow<List<NumberItemData>>> get() = _listState.asStateFlow()
 
     init {
-        thread {
-            val recoverList = appDatabase.numberItemDao().loadAll().map {
-                NumberItem(it)
-            }.toMutableStateList()
-            runOnMainThread {
-                _listState.value = recoverList
+        _listState.value = DatabaseUtil.loadAllNumbers().map {
+            it.sortedBy { numberItemData ->
+                numberItemData.number
             }
         }
     }
 
-    fun removeAt(index: Int) {
-        val id = _listState.value[index].id
-        _listState.value.removeAt(index)
-        thread {
-            appDatabase.numberItemDao().deleteById(id)
+    fun removeById(id: Long) {
+        Log.e("RemoveById", id.toString())
+        viewModelScope.launch {
+            DatabaseUtil.deleteById(id)
         }
+
     }
 
-    fun insert(num: NumberItem) {
-        _listState.value.insert(num)
-        saveToDatabase()
-    }
-
-    fun saveToDatabase() {
-        thread {
-            appDatabase.numberItemDao().run {
-                loadAll().forEach {
-                    deleteById(it.id)
-                }
-                _listState.value.forEach {
-                    it.id = insert(
-                        NumberItemData(
-                            number = it.number,
-                            brushIndex = it.brushIndex
-                        )
-                    )
-                }
-            }
+    fun insert(num: NumberItemData) {
+        viewModelScope.launch {
+            DatabaseUtil.insertNumber(num)
         }
+
     }
 }

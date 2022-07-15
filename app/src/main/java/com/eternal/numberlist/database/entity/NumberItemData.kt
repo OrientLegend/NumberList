@@ -7,7 +7,7 @@ import androidx.room.PrimaryKey
 @Entity
 data class NumberItemData(
     @PrimaryKey(autoGenerate = true)
-    val id: Long = 0,
+    var id: Long = 0,
     val number: Int,
     val brushIndex: Int
 )

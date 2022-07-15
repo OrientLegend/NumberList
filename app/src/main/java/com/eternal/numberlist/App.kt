@@ -20,14 +20,12 @@ class App: Application() {
         lateinit var vibrator: VibratorManager
         @SuppressLint("StaticFieldLeak")
         lateinit var context: Context
-        lateinit var appDatabase: AppDatabase
     }
 
 
     override fun onCreate() {
         super.onCreate()
         context = applicationContext
-        appDatabase = AppDatabase.getDatabase(this)
         MMKV.initialize(this)
         mmkv = MMKV.defaultMMKV()!!
         vibrator = applicationContext.getSystemService(Service.VIBRATOR_MANAGER_SERVICE)
